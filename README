@@ -1,0 +1,167 @@
+
+==== NAME ====
+
+Posy::Plugin::Info - Posy plugin which give supplementary entry information.
+
+
+==== VERSION ====
+
+This describes version ``0.0101'' of Posy::Plugin::Info.
+
+
+==== DESCRIPTION ====
+
+This plugin enables the user to provide supplementary information about each
+entry in .info files (in Field:Value format), which are parsed and will set
+$info_* flavour variables which can be used in flavour templates. This
+plugin can also be used to sort entries by the .info information fields.
+
+This enables one to create useful summaries of entry contents for use in
+category or chrono listings when one does not want to display the whole
+entry. While Posy::Plugin::ShortBody enables one to display just the first
+sentence in an entry, the usefulness of that can vary widely depending on
+what the first sentence is. With Posy::Plugin::Info one has much more
+control over the summary information.
+
+Even more powerful, the sort-by-info ability enables one to sort entries on
+much more significant information than just the date or the filename. What
+the information actually *is* is entirely up to you. The info_sort requires
+Posy::Plugin::YamlConfig in order to set the sort criteria.
+
+This plugin replaces the 'sort_entries' action, the 'set_vars' action, and
+provides an 'info' method for returning the info, if any, related to an
+entry.
+
+
+==   Configuration   ==
+
+This expects configuration settings in the $self->{config} hash, which, in
+the default Posy setup, can be defined in the main "config" file in the data
+directory.
+
+``info_sort''
+If true, enable sorting on .info information. (default: false)
+
+``info_sort_spec''
+Define the info-fields and order by which the entries will be sorted.
+
+    info_sort_spec:
+      order:
+        - Author
+        - Title
+        - Order
+      options:
+        Title:
+          reverse_order: 1
+          type: title
+        Order:
+          type: number
+
+The 'order' part of the spec is the order the fields are to be sorted by.
+The 'options' part of the spec gives optional options for each field. If the
+'reverse_order' is true, will sort that field in reverse order. The 'type'
+option indicates what type of comparison should be done on that field. The
+types are as follows:
+
+string
+A normal string comparison. The default.
+
+number
+Compare as a number.
+
+title
+The field is a title; compare as if any leading "The" or "A" was not there.
+
+If after sorting by the fields, there is still no difference, this will fall
+back to sorting by time, name or path, depending on what the value of the
+config variable 'sort_type' is.
+
+
+==== INSTALLATION ====
+
+Installation needs will vary depending on the particular setup a person has.
+
+
+==   Administrator, Automatic   ==
+
+If you are the administrator of the system, then the dead simple method of
+installing the modules is to use the CPAN or CPANPLUS system.
+
+    cpanp -i Posy::Plugin::Info
+
+This will install this plugin in the usual places where modules get
+installed when one is using CPAN(PLUS).
+
+
+==   Administrator, By Hand   ==
+
+If you are the administrator of the system, but don't wish to use the
+CPAN(PLUS) method, then this is for you. Take the *.tar.gz file and untar it
+in a suitable directory.
+
+To install this module, run the following commands:
+
+    perl Build.PL
+    ./Build
+    ./Build test
+    ./Build install
+
+Or, if you're on a platform (like DOS or Windows) that doesn't like the "./"
+notation, you can do this:
+
+   perl Build.PL
+   perl Build
+   perl Build test
+   perl Build install
+
+
+==   User With Shell Access   ==
+
+If you are a user on a system, and don't have root/administrator access, you
+need to install Posy somewhere other than the default place (since you don't
+have access to it). However, if you have shell access to the system, then
+you can install it in your home directory.
+
+Say your home directory is "/home/fred", and you want to install the modules
+into a subdirectory called "perl".
+
+Download the *.tar.gz file and untar it in a suitable directory.
+
+    perl Build.PL --install_base /home/fred/perl
+    ./Build
+    ./Build test
+    ./Build install
+
+This will install the files underneath /home/fred/perl.
+
+You will then need to make sure that you alter the PERL5LIB variable to find
+the modules.
+
+Therefore you will need to change the PERL5LIB variable to add
+/home/fred/perl/lib
+
+        PERL5LIB=/home/fred/perl/lib:${PERL5LIB}
+
+
+==== REQUIRES ====
+
+    Posy
+    Posy::Core
+
+    Test::More
+
+
+==== AUTHOR ====
+
+    Kathryn Andersen (RUBYKAT)
+    perlkat AT katspace dot com
+    http://www.katspace.com
+
+
+==== COPYRIGHT AND LICENCE ====
+
+Copyright (c) 2005 by Kathryn Andersen
+
+This program is free software; you can redistribute it and/or modify it
+under the same terms as Perl itself.
+

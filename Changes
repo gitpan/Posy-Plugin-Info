@@ -1,0 +1,12 @@
+Revision history for Posy-Plugin-Info
+=====================================
+
+0.0101 Sun 27 March 2005
+------------------------
+
+  * (27 Mar 2005) fixed bug with numeric comparison
+
+0.01 Sun 27 March 2005
+----------------------
+
+  * (27 Mar 2005) initial checkin
