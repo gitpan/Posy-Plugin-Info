@@ -1,6 +1,15 @@
 Revision history for Posy-Plugin-Info
 =====================================
 
+0.02 Thu 12 May 2005
+--------------------
+
+  * (12 May 2005) update Posy version
+
+  * (12 May 2005) add Makefile.PL
+
+  * (12 May 2005) info sort now ignores case for string sorting
+
 0.0101 Sun 27 March 2005
 ------------------------
 

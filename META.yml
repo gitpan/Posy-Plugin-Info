@@ -1,17 +1,17 @@
 --- #YAML:1.0
 name: Posy-Plugin-Info
-version: 0.0101
+version: 0.02
 author:
   - Kathryn Andersen
 abstract: |-
   Posy plugin which give supplementary entry information.
 license: perl
 requires:
-  Posy: 0.93
+  Posy: 0.95
 build_requires:
   Test::More: 0
 provides:
   Posy::Plugin::Info:
     file: lib/Posy/Plugin/Info.pm
-    version: 0.0101
-generated_by: Module::Build version 0.2608
+    version: 0.02
+generated_by: Module::Build version 0.261

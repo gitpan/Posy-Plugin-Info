@@ -7,11 +7,11 @@ Posy::Plugin::Info - Posy plugin which give supplementary entry information.
 
 =head1 VERSION
 
-This describes version B<0.0101> of Posy::Plugin::Info.
+This describes version B<0.02> of Posy::Plugin::Info.
 
 =cut
 
-our $VERSION = '0.0101';
+our $VERSION = '0.02';
 
 =head1 SYNOPSIS
 
@@ -215,6 +215,7 @@ sub sort_entries {
 			    # remove leading The or A from titles
 			    $a_val =~ s/^(The\s+|A\s+)//;
 			}
+			$a_val = lc($a_val); # ignore case on strings
 			$values{$id}->{$fn} = $a_val;
 		    }
 		}
