@@ -1,6 +1,17 @@
 Revision history for Posy-Plugin-Info
 =====================================
 
+0.03 Wed 13 July 2005
+---------------------
+
+  * (13 Jul 2005) info_type_spec
+  	Made a separate info_type_spec which gives the type information
+  about the info fields separate from the info_sort_spec information.
+  This is useful for (a) not having to repeat the information every time
+  you want to give a different sort order, (b) other plugins wanting to
+  use that information.
+  	This has made the plugin dependent on Posy::Plugin::YamlConfig.
+
 0.02 Thu 12 May 2005
 --------------------
 

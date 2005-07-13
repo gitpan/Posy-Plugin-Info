@@ -8,7 +8,8 @@ my $builder = Module::Build->new(
     dist_author         => 'Kathryn Andersen',
     dist_version_from   => 'lib/Posy/Plugin/Info.pm',
 	requires            => {
-	'Posy' => 0.95,
+	'Posy' => 0.97,
+	'Posy::Plugin::YamlConfig' => 0.42,
 	},
     build_requires => {
         'Test::More' => 0,

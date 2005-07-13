@@ -7,15 +7,16 @@ Posy::Plugin::Info - Posy plugin which give supplementary entry information.
 
 =head1 VERSION
 
-This describes version B<0.02> of Posy::Plugin::Info.
+This describes version B<0.03> of Posy::Plugin::Info.
 
 =cut
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 =head1 SYNOPSIS
 
     @plugins = qw(Posy::Core
+	Posy::Plugin::YamlConfig
 	...
 	Posy::Plugin::Info
 	...);
@@ -37,8 +38,9 @@ control over the summary information.
 Even more powerful, the sort-by-info ability enables one to sort entries
 on much more significant information than just the date or the filename.
 What the information actually I<is> is entirely up to you.
-The info_sort requires Posy::Plugin::YamlConfig in order to set
-the sort criteria.
+
+This plugin requires Posy::Plugin::YamlConfig in order to set the type
+information in the info fields.
 
 This plugin replaces the 'sort_entries' action, the 'set_vars' action,
 and provides an 'info' method for returning the info, if any, related to
@@ -56,33 +58,43 @@ file in the data directory.
 
 If true, enable sorting on .info information.  (default: false)
 
-=item B<info_sort_spec>
+=item B<info_type_spec>
 
-Define the info-fields and order by which the entries will be sorted.
+Define the info-fields and their types.
 
-    info_sort_spec:
-      order:
-        - Author
-        - Title
-        - Order
-      options:
+    info_type_spec:
         Title:
-          reverse_order: 1
           type: title
         Order:
           type: number
+        Rating:
+	  type: limited
+	  values:
+	    - G
+	    - PG
+	    - PG13
+	    - R
+	Author:
+	  type: string
+	Summary:
+	  type: text
 
-The 'order' part of the spec is the order the fields are to be sorted by.
-The 'options' part of the spec gives optional options for each field.  If
-the 'reverse_order' is true, will sort that field in reverse order.  The
-'type' option indicates what type of comparison should be done on that
-field.  The types are as follows:
+This gives a list of all the fields, and their types, with possible options.
+This is used for both sorting and for other plugins which depend on
+this one.  The types are used to determine the kind of comparison
+or presentation of the particular field.
 
 =over
 
 =item string
 
-A normal string comparison.  The default.
+A short string, which needs normal string comparison.  The default.
+
+=item text
+
+A multi-line string, which also uses normal string comparison, but
+may need to be presented differently (needing a textarea in a form,
+for example).
 
 =item number
 
@@ -92,7 +104,31 @@ Compare as a number.
 
 The field is a title; compare as if any leading "The" or "A" was not there.
 
+=item limited
+
+A short string which is only allowed a limited number of values.
+The "values" part of the definition gives those values.
+This is not actually enforced, but can be useful when desiring
+to present selectable options.
+ 
 =back
+
+=item B<info_sort_spec>
+
+Define the order by which the entries will be sorted.
+
+    info_sort_spec:
+      order:
+        - Author
+        - Title
+        - Order
+      reverse_order:
+        Title: 1
+
+The 'order' part of the spec is the order the fields are to be sorted by.
+The 'reverse_order' part of the spec defines which fields should be sorted
+in reverse order; if the field name is there, with a value of 1/true/on,
+then that field is to be sorted in reverse.
 
 If after sorting by the fields, there is still no difference, this will
 fall back to sorting by time, name or path, depending on what the
@@ -172,17 +208,16 @@ sub sort_entries {
 		    my $a_sort_type =
 			(
 			 (exists
-			  $self->{config}->{info_sort_spec}->{options}->{$fn}->{type}
+			  $self->{config}->{info_type_spec}->{$fn}->{type}
 			  and defined
-			  $self->{config}->{info_sort_spec}->{options}->{$fn}->{type})
+			  $self->{config}->{info_type_spec}->{$fn}->{type})
 			 ? 
-			 $self->{config}->{info_sort_spec}->{options}->{$fn}->{type}
+			 $self->{config}->{info_type_spec}->{$fn}->{type}
 			 : 'string'
 			);
 		    $sort_numeric{$fn} = ($a_sort_type eq 'number');
 		    $sort_reversed{$fn} =
-			$self->{config}->{info_sort_spec}->{options}->
-			    {$fn}->{reverse_order};
+			$self->{config}->{info_sort_spec}->{reverse_order}->{$fn};
 		    if (!defined $a_info{$fn})
 		    {
 			if ($a_sort_type eq 'number')
@@ -190,7 +225,7 @@ sub sort_entries {
 			    # sort undefined as zero
 			    $values{$id}->{$fn} = 0;
 			}
-			else # string or title
+			else # string or text or title
 			{
 			    # sort undefined as the empty string
 			    $values{$id}->{$fn} = '';
@@ -500,6 +535,7 @@ Therefore you will need to change the PERL5LIB variable to add
 
     Posy
     Posy::Core
+    Posy::Plugin::YamlConfig
 
     Test::More
 
