@@ -7,7 +7,7 @@ information.
 
 ==== VERSION ====
 
-This describes version ``0.0301'' of Posy::Plugin::Info.
+This describes version ``0.04'' of Posy::Plugin::Info.
 
 
 ==== DESCRIPTION ====
@@ -89,7 +89,7 @@ A short string which is only allowed a limited number of values. The
 enforced, but can be useful when desiring to present selectable options.
 
 ``info_sort_spec''
-Define the order by which the entries will be sorted.
+Define the default order by which the entries will be sorted.
 
     info_sort_spec:
       order:
@@ -107,6 +107,18 @@ then that field is to be sorted in reverse.
 If after sorting by the fields, there is still no difference, this will fall
 back to sorting by time, name or path, depending on what the value of the
 config variable 'sort_type' is.
+
+``info_sort_param''
+Defining this parameter enables sorting to be specified with a parameter in
+the URL. (default: '')
+
+    posy.cgi?info_sort=Author;info_sort=Title
+
+``info_sort_param_reverse''
+If ``info_sort_param'' is defined, this defines the parameter which
+specifies what fields are sorted in reverse order.
+
+    posy.cgi?info_sort_reverse=Date
 
 
 ==== INSTALLATION ====

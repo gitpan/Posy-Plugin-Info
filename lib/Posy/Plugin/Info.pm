@@ -7,11 +7,11 @@ Posy::Plugin::Info - Posy plugin which gives supplementary entry information.
 
 =head1 VERSION
 
-This describes version B<0.0301> of Posy::Plugin::Info.
+This describes version B<0.04> of Posy::Plugin::Info.
 
 =cut
 
-our $VERSION = '0.0301';
+our $VERSION = '0.04';
 
 =head1 SYNOPSIS
 
@@ -115,7 +115,7 @@ to present selectable options.
 
 =item B<info_sort_spec>
 
-Define the order by which the entries will be sorted.
+Define the default order by which the entries will be sorted.
 
     info_sort_spec:
       order:
@@ -133,6 +133,21 @@ then that field is to be sorted in reverse.
 If after sorting by the fields, there is still no difference, this will
 fall back to sorting by time, name or path, depending on what the
 value of the config variable 'sort_type' is.
+
+=item B<info_sort_param>
+
+Defining this parameter enables sorting to be specified with a parameter
+in the URL.
+(default: '')
+
+    posy.cgi?info_sort=Author;info_sort=Title
+
+=item B<info_sort_param_reverse>
+
+If B<info_sort_param> is defined, this defines the parameter which specifies
+what fields are sorted in reverse order.
+
+    posy.cgi?info_sort_reverse=Date
 
 =back
 
@@ -154,6 +169,10 @@ sub init {
     # set defaults
     $self->{config}->{info_sort} = 0
 	if (!defined $self->{config}->{info_sort});
+    $self->{config}->{info_sort_param} = ''
+	if (!defined $self->{config}->{info_sort_param});
+    $self->{config}->{info_sort_param_reverse} = 'info_sort_reverse'
+	if (!defined $self->{config}->{info_sort_param_reverse});
 } # init
 
 =head1 Flow Action Methods
@@ -178,15 +197,24 @@ sub sort_entries {
     my $flow_state = shift;
 
     if ($self->{config}->{info_sort}
-	and $self->{config}->{info_sort_spec})
+	and ($self->{config}->{info_sort_spec}
+	or ($self->{config}->{info_sort_param}
+	    and $self->param($self->{config}->{info_sort_param}))
+	))
     {
 	# no point sorting if there's only one
 	if (@{$flow_state->{entries}} > 1)
 	{
-	    my @sort_order =
-		@{$self->{config}->{info_sort_spec}->{order}};
-	    my %sort_numeric = ();
-	    my %sort_reversed = ();
+	    my @sort_order;
+	    if ($self->{config}->{info_sort_param}
+		and $self->param($self->{config}->{info_sort_param}))
+	    {
+		(@sort_order) = $self->param($self->{config}->{info_sort_param});
+	    }
+	    else
+	    {
+		@sort_order = @{$self->{config}->{info_sort_spec}->{order}};
+	    }
 
 	    my $id_sort_type = (defined $self->{config}->{sort_type}
 			     ? $self->{config}->{sort_type} : 'time_reversed');
@@ -197,6 +225,47 @@ sub sort_entries {
 	    my $id_sort_path = ($id_sort_type eq 'path');
 	    my $id_sort_path_reversed = ($id_sort_type eq 'path_reversed');
 	    
+	    my %sort_type = ();
+	    my %sort_numeric = ();
+	    my %sort_reversed = ();
+	    # turn the sort stuff into easier-to-get-at
+	    foreach my $fn (@sort_order)
+	    {
+		my $a_sort_type =
+		    (
+		     (exists
+		      $self->{config}->{info_type_spec}->{$fn}->{type}
+		      and defined
+		      $self->{config}->{info_type_spec}->{$fn}->{type})
+		     ? 
+		     $self->{config}->{info_type_spec}->{$fn}->{type}
+		     : 'string'
+		    );
+		$sort_type{$fn} = $a_sort_type;
+		$sort_numeric{$fn} = ($a_sort_type eq 'number');
+		if ($self->{config}->{info_sort_param}
+		    and $self->param($self->{config}->{info_sort_param}))
+		{
+		    my (@rev_param) = 
+			$self->param($self->{config}->
+				     {info_sort_param_reverse});
+		    $sort_reversed{$fn} = 0;
+		    foreach my $rfn (@rev_param)
+		    {
+			if ($rfn eq $fn)
+			{
+			    $sort_reversed{$fn} = 1;
+			    last;
+			}
+		    }
+		}
+		else
+		{
+		    $sort_reversed{$fn} =
+			$self->{config}->{info_sort_spec}->{reverse_order}->{$fn};
+		}
+	    }
+
 	    # pre-cache the actual comparison values
 	    my %values = ();
 	    foreach my $id (@{$flow_state->{entries}})
@@ -205,22 +274,9 @@ sub sort_entries {
 		$values{$id} = {};
 		foreach my $fn (@sort_order)
 		{
-		    my $a_sort_type =
-			(
-			 (exists
-			  $self->{config}->{info_type_spec}->{$fn}->{type}
-			  and defined
-			  $self->{config}->{info_type_spec}->{$fn}->{type})
-			 ? 
-			 $self->{config}->{info_type_spec}->{$fn}->{type}
-			 : 'string'
-			);
-		    $sort_numeric{$fn} = ($a_sort_type eq 'number');
-		    $sort_reversed{$fn} =
-			$self->{config}->{info_sort_spec}->{reverse_order}->{$fn};
 		    if (!defined $a_info{$fn})
 		    {
-			if ($a_sort_type eq 'number')
+			if ($sort_type{$fn} eq 'number')
 			{
 			    # sort undefined as zero
 			    $values{$id}->{$fn} = 0;
@@ -234,7 +290,7 @@ sub sort_entries {
 		    else
 		    {
 			my $a_val = $a_info{$fn};
-			if ($a_sort_type eq 'number')
+			if ($sort_type{$fn} eq 'number')
 			{
 			    $a_val =~ s/\s//g; # remove any spaces
 			    # non-numeric data should be compared as zero
@@ -245,7 +301,7 @@ sub sort_entries {
 				$a_val = 0;
 			    }
 			}
-			elsif ($a_sort_type eq 'title')
+			elsif ($sort_type{$fn} eq 'title')
 			{
 			    # remove leading The or A from titles
 			    $a_val =~ s/^(The\s+|A\s+)//;

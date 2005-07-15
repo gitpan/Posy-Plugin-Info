@@ -1,6 +1,14 @@
 Revision history for Posy-Plugin-Info
 =====================================
 
+0.04 Fri 15 July 2005
+---------------------
+
+  * (15 Jul 2005) sort by parameter
+  	This enhancement allows one to sort the entries dynamically, by
+  giving a parameter; this facility isn't turned on until the parmeter
+  name is defined in the config.
+
 0.0301 Fri 15 July 2005
 -----------------------
 
