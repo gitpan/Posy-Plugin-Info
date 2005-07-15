@@ -1,9 +1,9 @@
 ---
 name: Posy-Plugin-Info
-version: 0.03
+version: 0.0301
 author:
   - Kathryn Andersen
-abstract: Posy plugin which give supplementary entry information.
+abstract: Posy plugin which gives supplementary entry information.
 license: perl
 requires:
   Posy: 0.97
@@ -13,5 +13,5 @@ build_requires:
 provides:
   Posy::Plugin::Info:
     file: lib/Posy/Plugin/Info.pm
-    version: 0.03
+    version: 0.0301
 generated_by: Module::Build version 0.2611

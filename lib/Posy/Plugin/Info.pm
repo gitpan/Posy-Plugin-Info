@@ -3,15 +3,15 @@ use strict;
 
 =head1 NAME
 
-Posy::Plugin::Info - Posy plugin which give supplementary entry information.
+Posy::Plugin::Info - Posy plugin which gives supplementary entry information.
 
 =head1 VERSION
 
-This describes version B<0.03> of Posy::Plugin::Info.
+This describes version B<0.0301> of Posy::Plugin::Info.
 
 =cut
 
-our $VERSION = '0.03';
+our $VERSION = '0.0301';
 
 =head1 SYNOPSIS
 
@@ -63,21 +63,21 @@ If true, enable sorting on .info information.  (default: false)
 Define the info-fields and their types.
 
     info_type_spec:
-        Title:
-          type: title
-        Order:
-          type: number
-        Rating:
-	  type: limited
-	  values:
-	    - G
-	    - PG
-	    - PG13
-	    - R
-	Author:
-	  type: string
-	Summary:
-	  type: text
+      Title:
+        type: title
+      Order:
+        type: number
+      Rating:
+	type: limited
+	values:
+	  - G
+	  - PG
+	  - PG13
+	  - R
+      Author:
+	type: string
+      Summary:
+	type: text
 
 This gives a list of all the fields, and their types, with possible options.
 This is used for both sorting and for other plugins which depend on
