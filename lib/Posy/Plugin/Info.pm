@@ -7,11 +7,11 @@ Posy::Plugin::Info - Posy plugin which gives supplementary entry information.
 
 =head1 VERSION
 
-This describes version B<0.04> of Posy::Plugin::Info.
+This describes version B<0.0401> of Posy::Plugin::Info.
 
 =cut
 
-our $VERSION = '0.04';
+our $VERSION = '0.0401';
 
 =head1 SYNOPSIS
 
@@ -209,7 +209,15 @@ sub sort_entries {
 	    if ($self->{config}->{info_sort_param}
 		and $self->param($self->{config}->{info_sort_param}))
 	    {
-		(@sort_order) = $self->param($self->{config}->{info_sort_param});
+		my (@sort_params) = $self->param($self->{config}->{info_sort_param});
+		# only use non-empty values
+		foreach my $sp (@sort_params)
+		{
+		    if ($sp)
+		    {
+			push @sort_order, $sp;
+		    }
+		}
 	    }
 	    else
 	    {

@@ -1,6 +1,13 @@
 Revision history for Posy-Plugin-Info
 =====================================
 
+0.0401 Sun 17 July 2005
+-----------------------
+
+  * (17 Jul 2005) fixed bug in sort
+  	If empty info_sort params are given, this got confused.
+  Now this specifically checks for whether the param is empty.
+
 0.04 Fri 15 July 2005
 ---------------------
 
