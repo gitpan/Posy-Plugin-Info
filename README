@@ -7,7 +7,7 @@ information.
 
 ==== VERSION ====
 
-This describes version ``0.0401'' of Posy::Plugin::Info.
+This describes version ``0.05'' of Posy::Plugin::Info.
 
 
 ==== DESCRIPTION ====
@@ -28,12 +28,15 @@ Even more powerful, the sort-by-info ability enables one to sort entries on
 much more significant information than just the date or the filename. What
 the information actually *is* is entirely up to you.
 
+One can optionally pre-cache the info data by adding the 'index_info' action
+to the actions list, after the 'index_entries' action.
+
 This plugin requires Posy::Plugin::YamlConfig in order to set the type
 information in the info fields.
 
-This plugin replaces the 'sort_entries' action, the 'set_vars' action, and
-provides an 'info' method for returning the info, if any, related to an
-entry.
+This plugin replaces the 'sort_entries' action and the 'set_vars' action,
+provides an 'index_info' action for pre-caching the info data and provides
+an 'info' method for returning the info, if any, related to an entry.
 
 
 ==   Configuration   ==
@@ -119,6 +122,44 @@ If ``info_sort_param'' is defined, this defines the parameter which
 specifies what fields are sorted in reverse order.
 
     posy.cgi?info_sort_reverse=Date
+
+``info_cachefile''
+The full name of the file to be used to store the cache. Most people can
+just leave this at the default.
+
+
+==   Info Caching Parameters   ==
+
+Info pre-caching is turned on if the 'index_info' action is in the action
+list. Otherwise the info data is cached just as it comes. This plugin will
+do reindexing the first time it is run, or if it detects that there are
+files in the main file index which are new. Full or partial reindexing can
+be forced by setting the the following parameters:
+
+reindex_all
+    /cgi-bin/posy.cgi?reindex_all=1
+
+Does a full reindex of all files in the data_dir directory, clearing the
+existing information and starting again.
+
+reindex
+    /cgi-bin/posy.cgi?reindex=1
+
+Updates information for new files only.
+
+reindex_cat
+    /cgi-bin/posy.cgi?reindex_cat=stories/buffy
+
+Does an additive reindex of all files under the given category. Does not
+delete files from the index. Useful to call when you know you've just
+updated/added files in a particular category index, and don't want to have
+to reindex the whole site.
+
+delindex
+    /cgi-bin/posy.cgi?delindex=1
+
+Deletes files from the index if they no longer exist. Useful when you've
+deleted files but don't want to have to reindex the whole site.
 
 
 ==== INSTALLATION ====

@@ -1,6 +1,17 @@
 Revision history for Posy-Plugin-Info
 =====================================
 
+0.05 Sat 23 July 2005
+---------------------
+
+  * (23 Jul 2005) added info caching
+  	To speed things up, one can use the 'index_info' method to
+  create a cache of info data which will be loaded, instead of just
+  being read and parsed as needed.
+  	This is only enabled if the 'index_info' action is used; otherwise
+  pre-caching is not done, though the usual caching of already-parsed Info
+  is still done.
+
 0.0401 Sun 17 July 2005
 -----------------------
 

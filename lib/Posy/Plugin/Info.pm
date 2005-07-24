@@ -7,11 +7,11 @@ Posy::Plugin::Info - Posy plugin which gives supplementary entry information.
 
 =head1 VERSION
 
-This describes version B<0.0401> of Posy::Plugin::Info.
+This describes version B<0.05> of Posy::Plugin::Info.
 
 =cut
 
-our $VERSION = '0.0401';
+our $VERSION = '0.05';
 
 =head1 SYNOPSIS
 
@@ -20,6 +20,12 @@ our $VERSION = '0.0401';
 	...
 	Posy::Plugin::Info
 	...);
+    @actions = qw(
+	....
+	index_entries
+	index_info
+	...
+	);
 
 =head1 DESCRIPTION
 
@@ -39,12 +45,15 @@ Even more powerful, the sort-by-info ability enables one to sort entries
 on much more significant information than just the date or the filename.
 What the information actually I<is> is entirely up to you.
 
+One can optionally pre-cache the info data by adding the 'index_info'
+action to the actions list, after the 'index_entries' action.
+
 This plugin requires Posy::Plugin::YamlConfig in order to set the type
 information in the info fields.
 
-This plugin replaces the 'sort_entries' action, the 'set_vars' action,
-and provides an 'info' method for returning the info, if any, related to
-an entry.
+This plugin replaces the 'sort_entries' action and the 'set_vars' action,
+provides an 'index_info' action for pre-caching the info data and provides
+an 'info' method for returning the info, if any, related to an entry.
 
 =head2 Configuration
 
@@ -149,6 +158,53 @@ what fields are sorted in reverse order.
 
     posy.cgi?info_sort_reverse=Date
 
+=item B<info_cachefile>
+
+The full name of the file to be used to store the cache.
+Most people can just leave this at the default.
+
+=back
+
+=head2 Info Caching Parameters
+
+Info pre-caching is turned on if the 'index_info' action is in the action
+list.  Otherwise the info data is cached just as it comes.
+This plugin will do reindexing the first time it is run, or
+if it detects that there are files in the main file index which
+are new.  Full or partial reindexing can be forced by setting the
+the following parameters:
+
+=over
+
+=item reindex_all
+
+    /cgi-bin/posy.cgi?reindex_all=1
+
+Does a full reindex of all files in the data_dir directory,
+clearing the existing information and starting again.
+
+=item reindex
+
+    /cgi-bin/posy.cgi?reindex=1
+
+Updates information for new files only.
+
+=item reindex_cat
+
+    /cgi-bin/posy.cgi?reindex_cat=stories/buffy
+
+Does an additive reindex of all files under the given category.  Does not
+delete files from the index.  Useful to call when you know you've just
+updated/added files in a particular category index, and don't want to have
+to reindex the whole site.
+
+=item delindex
+
+    /cgi-bin/posy.cgi?delindex=1
+
+Deletes files from the index if they no longer exist.  Useful when you've
+deleted files but don't want to have to reindex the whole site.
+
 =back
 
 =cut
@@ -173,6 +229,8 @@ sub init {
 	if (!defined $self->{config}->{info_sort_param});
     $self->{config}->{info_sort_param_reverse} = 'info_sort_reverse'
 	if (!defined $self->{config}->{info_sort_param_reverse});
+    $self->{config}->{info_cachefile} ||=
+	File::Spec->catfile($self->{state_dir}, 'info.dat');
 } # init
 
 =head1 Flow Action Methods
@@ -384,6 +442,92 @@ sub sort_entries {
     1;	
 } # sort_entries
 
+=head2 index_info
+
+Find the info data of the entry files.
+
+Expects $self->{config} and $self->{files} to be set.
+
+=cut
+
+sub index_info {
+    my $self = shift;
+    my $flow_state = shift;
+
+    my $reindex_all = $self->param('reindex_all');
+    $reindex_all = 1 if (!$self->_info_init_caching());
+    if (!$reindex_all)
+    {
+	$reindex_all = 1 if (!$self->_info_read_cache());
+    }
+    # check for a partial reindex
+    my $reindex_cat = $self->param('reindex_cat');
+    # make sure there's no extraneous slashes
+    $reindex_cat =~ s{^/}{};
+    $reindex_cat =~ s{/$}{};
+    if (!$reindex_all
+	and $reindex_cat
+	and exists $self->{categories}->{$reindex_cat}
+	and defined $self->{categories}->{$reindex_cat})
+    {
+	$self->debug(1, "Info: reindexing $reindex_cat");
+	while (my $file_id = each %{$self->{files}})
+	{
+	    if (($self->{files}->{$file_id}->{cat_id} eq $reindex_cat)
+		or ($self->{files}->{$file_id}->{cat_id}
+		    =~ /^$reindex_cat/)
+	       )
+	    {
+		delete $self->{info}->{$file_id};
+		$self->info($file_id);
+	    }
+	}
+	$self->_info_save_cache();
+    }
+    elsif (!$reindex_all)
+    {
+	# If any files are in $self->{files} but not in $self->{info}
+	# add them to the index
+	my $newfiles = 0;
+	while (my $file_id = each %{$self->{files}})
+	{ exists $self->{info}->{$file_id}
+	    or do {
+		$newfiles++;
+		delete $self->{info}->{$file_id};
+		$self->info($file_id);
+	    };
+	}
+	$self->debug(1, "Info: added $newfiles new files") if $newfiles;
+	$self->_info_save_cache() if $newfiles;
+    }
+
+    if ($reindex_all) {
+	$self->debug(1, "Info: reindexing ALL");
+	while (my $file_id = each %{$self->{files}})
+	{
+	    delete $self->{info}->{$file_id};
+	    $self->info($file_id);
+	}
+	$self->_info_save_cache();
+    }
+    else
+    {
+	# If any files not available, delete them and just save the cache
+	if ($self->param('delindex'))
+	{
+	    $self->debug(1, "Info: checking for deleted files");
+	    my $deletions = 0;
+	    while (my $key = each %{$self->{info}})
+	    { exists $self->{files}->{$key}
+		or do { $deletions++; delete $self->{info}->{$key} };
+	    }
+	    $self->debug(1, "Info: deleted $deletions gone files")
+		if $deletions;
+	    $self->_info_save_cache() if $deletions;
+	}
+    }
+} # index_info
+
 =head1 Helper Methods
 
 Methods which can be called from within other methods.
@@ -531,6 +675,66 @@ sub read_info_file {
     }
     return ();
 } # read_info_file
+
+=head1 Private Methods
+
+Methods which may or may not be here in future.
+
+=head2 _info_init_caching
+
+Initialize the caching stuff used by index_entries
+
+=cut
+sub _info_init_caching {
+    my $self = shift;
+
+    return 0 if (!$self->{config}->{use_caching});
+    eval "require Storable";
+    if ($@) {
+	$self->debug(1, "Info: cache disabled, Storable not available"); 
+	$self->{config}->{use_caching} = 0; 
+	return 0;
+    }
+    if (!Storable->can('lock_retrieve')) {
+	$self->debug(1, "Info: cache disabled, Storable::lock_retrieve not available");
+	$self->{config}->{use_caching} = 0;
+	return 0;
+    }
+    $self->debug(1, "Info: using caching");
+    return 1;
+} # _info_init_caching
+
+=head2 _info_read_cache
+
+Reads the cached information used by index_entries
+
+=cut
+sub _info_read_cache {
+    my $self = shift;
+
+    return 0 if (!$self->{config}->{use_caching});
+    $self->{info} = (-r $self->{config}->{info_cachefile}
+	? Storable::lock_retrieve($self->{config}->{info_cachefile}) : undef);
+    if ($self->{info}) {
+	$self->debug(1, "Info: Using cached state");
+	return 1;
+    }
+    $self->{info} = {};
+    $self->debug(1, "Info: Flushing caches");
+    return 0;
+} # _info_read_cache
+
+=head2 _info_save_cache
+
+Saved the information gathered by index_entries to caches.
+
+=cut
+sub _info_save_cache {
+    my $self = shift;
+    return if (!$self->{config}->{use_caching});
+    $self->debug(1, "Info: Saving caches");
+    Storable::lock_store($self->{info}, $self->{config}->{info_cachefile});
+} # _info_save_cache
 
 =head1 INSTALLATION
 

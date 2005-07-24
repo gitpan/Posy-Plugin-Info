@@ -1,6 +1,6 @@
 ---
 name: Posy-Plugin-Info
-version: 0.0401
+version: 0.05
 author:
   - Kathryn Andersen
 abstract: Posy plugin which gives supplementary entry information.
@@ -13,5 +13,5 @@ build_requires:
 provides:
   Posy::Plugin::Info:
     file: lib/Posy/Plugin/Info.pm
-    version: 0.0401
+    version: 0.05
 generated_by: Module::Build version 0.2611
